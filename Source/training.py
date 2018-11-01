@@ -54,6 +54,7 @@ learning_rate = "0.01"
 
 # create unique job name
 job_name = stack_name + "-" + commit_id + "-" + timestamp
+output_path = 's3://{}/{}/output'.format(bucket, prefix)
 training_params = \
 {
     # specify the training docker image
@@ -63,7 +64,7 @@ training_params = \
     },
     "RoleArn": role,
     "OutputDataConfig": {
-        "S3OutputPath": 's3://{}/{}/output'.format(bucket, prefix)
+        "S3OutputPath": output_path
     },
     "ResourceConfig": {
         "InstanceCount": 1,
@@ -142,26 +143,22 @@ except:
 config_data_qa = {
   "Parameters":
     {
-        "BucketName": bucket,
-        "CommitID": commit_id,
         "Environment": "qa",
-        "ParentStackName": stack_name,
+        "JobName": job_name,
+        "ModelOutputPath": output_path,
         "SageMakerRole": role,
-        "SageMakerImage": training_image,
-        "Timestamp": timestamp
+        "SageMakerImage": training_image
     }
 }
 
 config_data_prod = {
   "Parameters":
     {
-        "BucketName": bucket,
-        "CommitID": commit_id,
         "Environment": "prod",
-        "ParentStackName": stack_name,
+        "JobName": job_name,
+        "ModelOutputPath": output_path,
         "SageMakerRole": role,
-        "SageMakerImage": training_image,
-        "Timestamp": timestamp
+        "SageMakerImage": training_image
     }
 }
 
