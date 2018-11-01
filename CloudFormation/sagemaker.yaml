@@ -45,6 +45,7 @@ Parameters:
 Resources:
   Model:
     Type: "AWS::SageMaker::Model"
+    DeletionPolicy: Delete
     Properties:
       ModelName: !Sub ${Environment}-${ParentStackName}-${CommitID}-${Timestamp}
       ExecutionRoleArn: !Sub ${SageMakerRole}
@@ -54,12 +55,14 @@ Resources:
   Endpoint:
     Type: "AWS::SageMaker::Endpoint"
     DependsOn: EndpointConfig
+    DeletionPolicy: Delete
     Properties:
       EndpointName: !Sub ${Environment}-${ParentStackName}-${CommitID}-${Timestamp}
       EndpointConfigName: !GetAtt EndpointConfig.EndpointConfigName
   EndpointConfig:
     Type: "AWS::SageMaker::EndpointConfig"
     DependsOn: Model
+    DeletionPolicy: Delete
     Properties:
         EndpointConfigName: !Sub ${Environment}-${ParentStackName}-${CommitID}-${Timestamp}
         ProductionVariants:

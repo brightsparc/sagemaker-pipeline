@@ -21,6 +21,14 @@ Parameters:
     Default: master
     Description: Branch to use from Repo. Only the Name. not the URL
     Type: String
+  DataSource:
+    Default: http://data.mxnet.io/data/caltech-256
+    Description: The path to Image Dateset
+    Type: String
+  BucketPrefix:
+    Default: caltech-256
+    Description: The bucket prefix for the dataset
+    Type: String
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
@@ -103,17 +111,21 @@ Resources:
                 - echo "Installing wget and boto3"
                 - pip3 install wget
                 - pip3 install boto3
+            pre_build:
+              commands:
+                - echo "Running data-prep.py"
+                - python3 Source/data-prep.py "${DataSource}" "${DataBucket}" "${BucketPrefix}"
             build:
               commands:
                 - echo "Running training.py"
-                - python3 Source/training.py "${AWS::Region}" "${SagemakerRole.Arn}" "${DataBucket}" "${AWS::StackName}" $CODEBUILD_RESOLVED_SOURCE_VERSION
+                - python3 Source/training.py "${AWS::Region}" "${SagemakerRole.Arn}" "${DataBucket}" "${BucketPrefix}" "${AWS::StackName}" $CODEBUILD_RESOLVED_SOURCE_VERSION
             post_build:
               commands:
                 - echo "Cleaning"
                 - rm caltech*
           artifacts:
             files:
-              - '**/*'
+              - 'CloudFormation/*'
       TimeoutInMinutes: 30
 
   TestEndpointProjectQA:
@@ -229,6 +241,9 @@ Resources:
         - Name: QA
           Actions:
             - Name: LaunchEndpoint
+              Description: |
+                Consider invoking a lambda step to deploy model which is updates endpoint with zero downtime.
+                see: https://github.com/aws-samples/serverless-sagemaker-orchestration/blob/master/lambda_functions/deploy_model.py
               ActionTypeId:
                 Category: Deploy
                 Owner: AWS

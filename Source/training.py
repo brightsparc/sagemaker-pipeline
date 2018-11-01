@@ -1,7 +1,4 @@
 import boto3
-import re
-import os
-import wget
 import time
 from time import gmtime, strftime
 import sys
@@ -29,34 +26,13 @@ start = time.time()
 region_name = sys.argv[1]
 role = sys.argv[2]
 bucket = sys.argv[3]
-stack_name = sys.argv[4]
-commit_id = sys.argv[5]
+prefix = sys.argv[4]
+stack_name = sys.argv[5]
+commit_id = sys.argv[6]
 commit_id = commit_id[0:7]
 
 training_image = get_image_uri(region_name)
 timestamp = time.strftime('%Y-%m-%d-%H-%M-%S', time.gmtime())
-
-def download(url):
-    filename = url.split("/")[-1]
-    if not os.path.exists(filename):
-        wget.download(url, filename)
-
-
-def upload_to_s3(channel, file):
-    s3 = boto3.resource('s3')
-    data = open(file, "rb")
-    key = channel + '/' + file
-    s3.Bucket(bucket).put_object(Key=key, Body=data)
-
-# caltech-256
-print ("Downloadng Training Data")
-download('http://data.mxnet.io/data/caltech-256/caltech-256-60-train.rec')
-upload_to_s3('train', 'caltech-256-60-train.rec')
-print ("Finished Downloadng Training Data")
-print ("Downloadng Testing Data")
-download('http://data.mxnet.io/data/caltech-256/caltech-256-60-val.rec')
-upload_to_s3('validation', 'caltech-256-60-val.rec')
-print ("Finished Downloadng Testing Data")
 
 print ("Setting Algorithm Settings")
 # The algorithm supports multiple network depth (number of layers). They are 18, 34, 50, 101, 152 and 200
@@ -76,7 +52,6 @@ epochs = "1"
 # learning rate
 learning_rate = "0.01"
 
-s3 = boto3.client('s3')
 # create unique job name
 job_name = stack_name + "-" + commit_id + "-" + timestamp
 training_params = \
@@ -88,7 +63,7 @@ training_params = \
     },
     "RoleArn": role,
     "OutputDataConfig": {
-        "S3OutputPath": 's3://{}/'.format(bucket)
+        "S3OutputPath": 's3://{}/{}/output'.format(bucket, prefix)
     },
     "ResourceConfig": {
         "InstanceCount": 1,
@@ -117,7 +92,7 @@ training_params = \
             "DataSource": {
                 "S3DataSource": {
                     "S3DataType": "S3Prefix",
-                    "S3Uri": 's3://{}/train/'.format(bucket),
+                    "S3Uri": 's3://{}/{}/train/'.format(bucket, prefix),
                     "S3DataDistributionType": "FullyReplicated"
                 }
             },
@@ -129,7 +104,7 @@ training_params = \
             "DataSource": {
                 "S3DataSource": {
                     "S3DataType": "S3Prefix",
-                    "S3Uri": 's3://{}/validation/'.format(bucket),
+                    "S3Uri": 's3://{}/{}/validation/'.format(bucket, prefix),
                     "S3DataDistributionType": "FullyReplicated"
                 }
             },
