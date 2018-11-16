@@ -241,9 +241,6 @@ Resources:
         - Name: QA
           Actions:
             - Name: LaunchEndpoint
-              Description: |
-                Consider invoking a lambda step to deploy model which is updates endpoint with zero downtime.
-                see: https://github.com/aws-samples/serverless-sagemaker-orchestration/blob/master/lambda_functions/deploy_model.py
               ActionTypeId:
                 Category: Deploy
                 Owner: AWS

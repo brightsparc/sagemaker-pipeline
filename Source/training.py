@@ -144,6 +144,7 @@ config_data_qa = {
   "Parameters":
     {
         "Environment": "qa",
+        "ParentStackName": stack_name,
         "JobName": job_name,
         "ModelOutputPath": output_path,
         "SageMakerRole": role,
@@ -155,6 +156,7 @@ config_data_prod = {
   "Parameters":
     {
         "Environment": "prod",
+        "ParentStackName": stack_name,
         "JobName": job_name,
         "ModelOutputPath": output_path,
         "SageMakerRole": role,
