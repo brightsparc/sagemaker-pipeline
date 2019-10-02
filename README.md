@@ -67,7 +67,7 @@ Click on the **Launch Stack** button below to launch the CloudFormation Stack to
 
 *NOTE: The URL for Launch Stack is automatically generated through a pipeline in one of Stelligent's AWS accounts.*
 
-[![Launch CFN stack](https://ap-southeast-2.console.aws.amazon.com/cloudformation/home?region=ap-southeast-2#/stacks/create/review?templateURL=https://bs-smcp-src.s3-ap-southeast-2.amazonaws.com/CodePipeline/pipeline.yaml)
+[![Launch CFN stack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://ap-southeast-2.console.aws.amazon.com/cloudformation/home?region=ap-southeast-2#/stacks/create/review?templateURL=https://bs-smcp-src.s3-ap-southeast-2.amazonaws.com/CodePipeline/pipeline.yaml)
 
 You can launch the same stack using the AWS CLI. Here's an example:
 
