@@ -75,7 +75,7 @@ Resources:
       Environment:
         Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_SMALL
-        Image: aws/codebuild/eb-ruby-2.3-amazonlinux-64:2.1.6
+        Image: aws/codebuild/amazonlinux2-x86_64-standard:1.0
       Source:
         Type: CODEPIPELINE
         BuildSpec: !Sub |
@@ -100,7 +100,7 @@ Resources:
       Environment:
         Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_SMALL
-        Image: aws/codebuild/eb-python-3.4-amazonlinux-64:2.1.6
+        Image: aws/codebuild/amazonlinux2-x86_64-standard:1.0
       Source:
         Type: CODEPIPELINE
         BuildSpec: !Sub |
@@ -139,7 +139,7 @@ Resources:
       Environment:
         Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_SMALL
-        Image: aws/codebuild/eb-python-3.4-amazonlinux-64:2.1.6
+        Image: aws/codebuild/amazonlinux2-x86_64-standard:1.0
       Source:
         Type: CODEPIPELINE
         BuildSpec: !Sub |
@@ -168,7 +168,7 @@ Resources:
       Environment:
         Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_SMALL
-        Image: aws/codebuild/eb-python-3.4-amazonlinux-64:2.1.6
+        Image: aws/codebuild/amazonlinux2-x86_64-standard:1.0
       Source:
         Type: CODEPIPELINE
         BuildSpec: !Sub |
