@@ -122,7 +122,7 @@ Resources:
             build:
               commands:
                 - echo "Running training.py"
-                - python3 Source/training.py "${AWS::Region}" "${SagemakerRole.Arn}" "${DataBucket}" "${BucketPrefix}" "${AWS::StackName}" $CODEBUILD_RESOLVED_SOURCE_VERSION
+                - python3 Source/training.py "${AWS::Region}" "${SagemakerExecutionRole.Arn}" "${SagemakerAutoScalingRole.Arn}" "${DataBucket}" "${BucketPrefix}" "${AWS::StackName}" $CODEBUILD_RESOLVED_SOURCE_VERSION
             post_build:
               commands:
                 - echo "Cleaning"
@@ -334,6 +334,10 @@ Resources:
                   - sagemaker:*
                   - iam:PassRole
                   - s3:*
+                  - application-autoscaling:*
+                  - cloudwatch:PutMetricAlarm
+                  - cloudwatch:DescribeAlarms
+                  - cloudwatch:DeleteAlarms
                 Effect: Allow
                 Resource: '*'
 
@@ -402,7 +406,7 @@ Resources:
                 Effect: Allow
                 Resource: '*'
 
-  SagemakerRole:
+  SagemakerExecutionRole:
     Type: AWS::IAM::Role
     Properties:
       RoleName: !Sub ${AWS::StackName}-sagemaker-role
@@ -428,6 +432,53 @@ Resources:
                 - s3:ListBucket
                 Effect: Allow
                 Resource: arn:aws:s3:::*
+
+  SagemakerAutoScalingRole: 
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${AWS::StackName}-autoscaling-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              Service:
+                - sagemaker.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      Path: "/"
+      Policies:
+        - PolicyName: "AutoscalingPolicySagemaker"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              -
+                Effect: "Allow"
+                Action:
+                  - "sagemaker:DescribeEndpoint"
+                  - "sagemaker:DescribeEndpointConfig"
+                  - "sagemaker:UpdateEndpointWeightsAndCapacities"
+                Resource: "*"
+              -
+                Effect: "Allow"
+                Action:
+                  - "application-autoscaling:*"
+                Resource: "*"
+              -
+                Effect: "Allow"
+                Action:
+                  - "cloudwatch:PutMetricAlarm"
+                  - "cloudwatch:DescribeAlarms"
+                  - "cloudwatch:DeleteAlarms"
+                Resource: "*"
+              -
+                Effect: "Allow"
+                Action: iam:CreateServiceLinkedRole
+                Resource: "arn:aws:iam::*:role/aws-service-role/sagemaker.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_SageMakerEndpoint"
+                Condition: 
+                  StringLike: 
+                    iam:AWSServiceName: sagemaker.application-autoscaling.amazonaws.com 
 
 Outputs:
   PipelineUrl:

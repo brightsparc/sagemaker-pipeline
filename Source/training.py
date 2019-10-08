@@ -24,11 +24,12 @@ def get_image_uri(region_name):
 start = time.time()
 
 region_name = sys.argv[1]
-role = sys.argv[2]
-bucket = sys.argv[3]
-prefix = sys.argv[4]
-stack_name = sys.argv[5]
-commit_id = sys.argv[6]
+execution_role = sys.argv[2]
+autoscaling_role = sys.argv[3]
+bucket = sys.argv[4]
+prefix = sys.argv[5]
+stack_name = sys.argv[6]
+commit_id = sys.argv[7]
 commit_id = commit_id[0:7]
 
 training_image = get_image_uri(region_name)
@@ -62,7 +63,7 @@ training_params = \
         "TrainingImage": training_image,
         "TrainingInputMode": "File"
     },
-    "RoleArn": role,
+    "RoleArn": execution_role,
     "OutputDataConfig": {
         "S3OutputPath": output_path
     },
@@ -147,8 +148,9 @@ config_data_qa = {
         "ParentStackName": stack_name,
         "JobName": job_name,
         "ModelOutputPath": output_path,
-        "SageMakerRole": role,
-        "SageMakerImage": training_image
+        "SageMakerRole": execution_role,
+        "SageMakerImage": training_image,
+        "AutoScalingRole": autoscaling_role,
     }
 }
 
@@ -159,8 +161,9 @@ config_data_prod = {
         "ParentStackName": stack_name,
         "JobName": job_name,
         "ModelOutputPath": output_path,
-        "SageMakerRole": role,
-        "SageMakerImage": training_image
+        "SageMakerRole": execution_role,
+        "SageMakerImage": training_image,
+        "AutoScalingRole": autoscaling_role,
     }
 }
 

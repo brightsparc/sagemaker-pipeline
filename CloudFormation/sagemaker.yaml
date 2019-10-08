@@ -32,27 +32,52 @@ Parameters:
     MinLength: '1'
     Type: String
   SageMakerInstanceType:
-    Default: ml.t2.medium
-    Description: Type of Instance for SageMaker inference
+    Default: ml.m5.large
+    Description: Type of Instance for SageMaker inference (Must not be burstable for AutoScaling)
     MaxLength: '64'
     MinLength: '1'
     Type: String
+  SageMakerVariant:
+    Description: Name of the SageMaker variant
+    Default: 'AllTraffic'
+    Type: String
+  AutoScalingRole:
+    Description: Name of SageMaker role
+    MaxLength: '64'
+    MinLength: '1'
+    Type: String
+  AutoScalingMinCapacity:
+    Default: '1'
+    Description: Minimum number of instances for endpoint
+    Type: Number
+  AutoScalingMaxCapacity:
+    Default: '3'
+    Description: Maximum number of instances for endpoint
+    Type: Number
+  AutoScalingCoolDownPeriod:
+    Default: '600'
+    Description: The amount of time, in seconds, after a scaling activity completes before any further trigger-related scaling activities can start
+    Type: Number
+  AutoScalingInvocationsPerInstance:
+    Default: '100'
+    Description: The average number of times per minute that each instance for a variant is invoked
+    Type: Number
 Resources:
   Model:
     Type: "AWS::SageMaker::Model"
     DeletionPolicy: Delete
     Properties:
-      ModelName: !Sub ${Environment}-${JobName}
-      ExecutionRoleArn: !Sub ${SageMakerRole}
+      ModelName: !Sub ${ParentStackName}-${Environment}-${JobName}
+      ExecutionRoleArn: !Ref SageMakerRole
       PrimaryContainer:
         ModelDataUrl: !Sub ${ModelOutputPath}/${JobName}/output/model.tar.gz
-        Image: !Sub ${SageMakerImage}
+        Image: !Ref SageMakerImage
   Endpoint:
     Type: "AWS::SageMaker::Endpoint"
     DependsOn: EndpointConfig
     DeletionPolicy: Delete
     Properties:
-      EndpointName: !Sub ${Environment}-${ParentStackName}
+      EndpointName: !Sub ${ParentStackName}-${Environment}
       EndpointConfigName: !GetAtt EndpointConfig.EndpointConfigName
   EndpointConfig:
     Type: "AWS::SageMaker::EndpointConfig"
@@ -62,7 +87,34 @@ Resources:
         EndpointConfigName: !Sub ${Environment}-${JobName}
         ProductionVariants:
         - ModelName: !GetAtt Model.ModelName
-          VariantName: AllTraffic
-          InitialInstanceCount: 1
-          InstanceType: !Sub ${SageMakerInstanceType}
+          VariantName: !Ref SageMakerVariant
+          InitialInstanceCount: !Ref AutoScalingMinCapacity
+          InstanceType: !Ref SageMakerInstanceType
           InitialVariantWeight: 1
+  AutoScalingTarget:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    DependsOn: Endpoint
+    Properties: 
+      MinCapacity: !Ref AutoScalingMinCapacity
+      MaxCapacity: !Ref AutoScalingMaxCapacity
+      ResourceId: !Sub endpoint/${ParentStackName}-${Environment}/variant/${SageMakerVariant}
+      RoleARN: !Ref AutoScalingRole
+      ScalableDimension: sagemaker:variant:DesiredInstanceCount
+      ServiceNamespace: sagemaker
+  AutoScalingPolicy:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    DependsOn: AutoScalingTarget
+    Properties: 
+      PolicyName: !Sub SageMaker-${ParentStackName}-${Environment}
+      PolicyType: TargetTrackingScaling
+      ResourceId: !Sub endpoint/${ParentStackName}-${Environment}/variant/${SageMakerVariant}
+      ScalableDimension: sagemaker:variant:DesiredInstanceCount
+      ScalingTargetId: !Ref AutoScalingTarget
+      ServiceNamespace: sagemaker
+      TargetTrackingScalingPolicyConfiguration: 
+        DisableScaleIn: False
+        PredefinedMetricSpecification: 
+          PredefinedMetricType: SageMakerVariantInvocationsPerInstance
+        ScaleInCooldown: !Ref AutoScalingCoolDownPeriod
+        ScaleOutCooldown: !Ref AutoScalingCoolDownPeriod
+        TargetValue: !Ref AutoScalingInvocationsPerInstance
