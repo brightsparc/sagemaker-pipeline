@@ -7,13 +7,12 @@ import time
 
 start = time.time()
 
-endpoint_name = sys.argv[1]
-configuration_file = sys.argv[2]
+configuration_file = sys.argv[1]
 
 with open(configuration_file) as f:
     data = json.load(f)
 
-stack_name = data["Parameters"]["ParentStackName"]
+endpoint_name = '{}-{}'.format(data["Parameters"]["ParentStackName"], data["Parameters"]["Environment"])
 
 runtime = boto3.client('runtime.sagemaker')
 

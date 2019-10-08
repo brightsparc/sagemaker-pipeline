@@ -109,9 +109,7 @@ Resources:
       PolicyType: TargetTrackingScaling
       ResourceId: !Sub endpoint/${ParentStackName}-${Environment}/variant/${SageMakerVariant}
       ScalingTargetId: !Ref AutoScalingTarget
-      ServiceNamespace: sagemaker
       TargetTrackingScalingPolicyConfiguration: 
-        DisableScaleIn: False
         PredefinedMetricSpecification: 
           PredefinedMetricType: SageMakerVariantInvocationsPerInstance
         ScaleInCooldown: !Ref AutoScalingCoolDownPeriod

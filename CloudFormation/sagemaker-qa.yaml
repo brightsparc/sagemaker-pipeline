@@ -42,7 +42,7 @@ Resources:
     Type: "AWS::SageMaker::Model"
     DeletionPolicy: Delete
     Properties:
-      ModelName: !Sub ${Environment}-${JobName}
+      ModelName: !Sub ${ParentStackName}-${Environment}-${JobName}
       ExecutionRoleArn: !Sub ${SageMakerRole}
       PrimaryContainer:
         ModelDataUrl: !Sub ${ModelOutputPath}/${JobName}/output/model.tar.gz
@@ -52,7 +52,7 @@ Resources:
     DependsOn: EndpointConfig
     DeletionPolicy: Delete
     Properties:
-      EndpointName: !Sub ${Environment}-${ParentStackName}
+      EndpointName: !Sub ${ParentStackName}-${Environment}
       EndpointConfigName: !GetAtt EndpointConfig.EndpointConfigName
   EndpointConfig:
     Type: "AWS::SageMaker::EndpointConfig"
