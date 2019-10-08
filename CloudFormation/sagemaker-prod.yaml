@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'AWS SageMaker Endpoint'
+Description: 'Prod SageMaker Endpoint'
 Parameters:
   Environment:
     Description: Current environment we are working in
@@ -108,7 +108,6 @@ Resources:
       PolicyName: !Sub SageMaker-${ParentStackName}-${Environment}
       PolicyType: TargetTrackingScaling
       ResourceId: !Sub endpoint/${ParentStackName}-${Environment}/variant/${SageMakerVariant}
-      ScalableDimension: sagemaker:variant:DesiredInstanceCount
       ScalingTargetId: !Ref AutoScalingTarget
       ServiceNamespace: sagemaker
       TargetTrackingScalingPolicyConfiguration: 

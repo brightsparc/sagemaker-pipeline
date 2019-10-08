@@ -260,7 +260,7 @@ Resources:
                 ActionMode: REPLACE_ON_FAILURE
                 RoleArn: !GetAtt [CFNRole, Arn]
                 StackName: !Sub qa-${AWS::StackName}
-                TemplatePath: !Sub "bld::CloudFormation/sagemaker.yaml"
+                TemplatePath: !Sub "bld::CloudFormation/sagemaker-qa.yaml"
                 TemplateConfiguration: "bld::CloudFormation/configuration_qa.json"
               RunOrder: '1'
             - Name: TestEndpoint
@@ -298,7 +298,7 @@ Resources:
                 ActionMode: REPLACE_ON_FAILURE
                 RoleArn: !GetAtt [CFNRole, Arn]
                 StackName: !Sub prod-${AWS::StackName}
-                TemplatePath: !Sub "bld::CloudFormation/sagemaker.yaml"
+                TemplatePath: !Sub "bld::CloudFormation/sagemaker-prod.yaml"
                 TemplateConfiguration: "bld::CloudFormation/configuration_prod.json"
               RunOrder: '2'
             - Name: TestEndpoint

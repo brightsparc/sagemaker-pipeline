@@ -149,8 +149,7 @@ config_data_qa = {
         "JobName": job_name,
         "ModelOutputPath": output_path,
         "SageMakerRole": execution_role,
-        "SageMakerImage": training_image,
-        "AutoScalingRole": autoscaling_role,
+        "SageMakerImage": training_image
     }
 }
 

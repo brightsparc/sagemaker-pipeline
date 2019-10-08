@@ -1,0 +1,68 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'QA SageMaker Endpoint'
+Parameters:
+  Environment:
+    Description: Current environment we are working in
+    MaxLength: '64'
+    MinLength: '1'
+    Type: String
+  ParentStackName:
+    Description: Name of parent stack
+    MaxLength: '64'
+    MinLength: '1'
+    Type: String
+  JobName:
+    Description: Name of data bucket
+    MaxLength: '64'
+    MinLength: '1'
+    Type: String
+  ModelOutputPath:
+    Description: The s3 model output path
+    MaxLength: '1024'
+    MinLength: '1'
+    Type: String
+  SageMakerRole:
+    Description: Name of SageMaker role
+    MaxLength: '64'
+    MinLength: '1'
+    Type: String
+  SageMakerImage:
+    Description: Name of SageMaker training image
+    MaxLength: '256'
+    MinLength: '1'
+    Type: String
+  SageMakerInstanceType:
+    Default: ml.t2.medium
+    Description: Type of Instance for SageMaker inference
+    MaxLength: '64'
+    MinLength: '1'
+    Type: String
+Resources:
+  Model:
+    Type: "AWS::SageMaker::Model"
+    DeletionPolicy: Delete
+    Properties:
+      ModelName: !Sub ${Environment}-${JobName}
+      ExecutionRoleArn: !Sub ${SageMakerRole}
+      PrimaryContainer:
+        ModelDataUrl: !Sub ${ModelOutputPath}/${JobName}/output/model.tar.gz
+        Image: !Sub ${SageMakerImage}
+  Endpoint:
+    Type: "AWS::SageMaker::Endpoint"
+    DependsOn: EndpointConfig
+    DeletionPolicy: Delete
+    Properties:
+      EndpointName: !Sub ${Environment}-${ParentStackName}
+      EndpointConfigName: !GetAtt EndpointConfig.EndpointConfigName
+  EndpointConfig:
+    Type: "AWS::SageMaker::EndpointConfig"
+    DependsOn: Model
+    DeletionPolicy: Delete
+    Properties:
+        EndpointConfigName: !Sub ${Environment}-${JobName}
+        ProductionVariants:
+        - ModelName: !GetAtt Model.ModelName
+          VariantName: AllTraffic
+          InitialInstanceCount: 1
+          InstanceType: !Sub ${SageMakerInstanceType}
+          InitialVariantWeight: 1
