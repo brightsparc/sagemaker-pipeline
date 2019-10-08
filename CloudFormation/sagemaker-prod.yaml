@@ -67,7 +67,7 @@ Resources:
     Type: "AWS::SageMaker::Model"
     DeletionPolicy: Delete
     Properties:
-      ModelName: !Sub ${ParentStackName}-${Environment}-${JobName}
+      ModelName: !Sub ${Environment}-${JobName}
       ExecutionRoleArn: !Ref SageMakerRole
       PrimaryContainer:
         ModelDataUrl: !Sub ${ModelOutputPath}/${JobName}/output/model.tar.gz

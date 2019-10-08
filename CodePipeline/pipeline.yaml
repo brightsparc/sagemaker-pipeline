@@ -259,7 +259,7 @@ Resources:
               Configuration:
                 ActionMode: REPLACE_ON_FAILURE
                 RoleArn: !GetAtt [CFNRole, Arn]
-                StackName: !Sub qa-${AWS::StackName}
+                StackName: !Sub ${AWS::StackName}-qa
                 TemplatePath: !Sub "bld::CloudFormation/sagemaker-qa.yaml"
                 TemplateConfiguration: "bld::CloudFormation/configuration_qa.json"
               RunOrder: '1'
@@ -297,7 +297,7 @@ Resources:
               Configuration:
                 ActionMode: REPLACE_ON_FAILURE
                 RoleArn: !GetAtt [CFNRole, Arn]
-                StackName: !Sub prod-${AWS::StackName}
+                StackName: !Sub ${AWS::StackName}-prod
                 TemplatePath: !Sub "bld::CloudFormation/sagemaker-prod.yaml"
                 TemplateConfiguration: "bld::CloudFormation/configuration_prod.json"
               RunOrder: '2'
