@@ -356,9 +356,13 @@ Resources:
                 - codepipeline:*
                 - sagemaker:*
                 - s3:*
+                - ecr:GetAuthorizationToken
+                - cloudwatch:PutMetricData
                 - logs:CreateLogGroup
                 - logs:CreateLogStream
+                - logs:DescribeLogStreams
                 - logs:PutLogEvents
+                - logs:GetLogEvents
                 Effect: Allow
                 Resource: '*'
               - Action:
