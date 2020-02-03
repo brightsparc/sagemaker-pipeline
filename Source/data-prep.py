@@ -1,40 +1,36 @@
 import boto3
+from botocore.exceptions import ClientError
 import time
-import os
 import sys
-import wget
+
+bucket_name = sys.argv[1]
+prefix = sys.argv[2]
 
 start = time.time()
+print('Data prep started...')
 
-source = sys.argv[1]
-bucket = sys.argv[2]
-prefix = sys.argv[3]
+# Based on model monitor example using CSE-CIC-IDS2018 dataset
+# see also: https://github.com/aws-samples/reinvent2019-aim362-sagemaker-debugger-model-monitor
 
 s3 = boto3.resource('s3')
 
-def download(url):
-    filename = url.split("/")[-1]
-    if not os.path.exists(filename):
-        wget.download(url, filename)
+source_bucket_name = "endtoendmlapp"
+source_bucket_prefix = "aim362/data/"
+source_bucket = s3.Bucket(source_bucket_name)
 
-def upload_to_s3(prefix, channel, file):
-    data = open(file, "rb")
-    key = '{}/{}/{}'.format(prefix, channel, file)
-    s3.Bucket(bucket).put_object(Key=key, Body=data)
-
-# This examples downloads recordIO files that have already be split into train/Test
-# For the process of creating these files see the "im2rec.py" as part of mxnet
-# see: https://gluon-cv.mxnet.io/build/examples_datasets/recordio.html
-
-print ("Downloadng Training Data")
-download(os.path.join(source, 'caltech-256-60-train.rec'))
-upload_to_s3(prefix, 'train', 'caltech-256-60-train.rec')
-print ("Finished Downloadng Training Data")
-
-print ("Downloadng Testing Data")
-download(os.path.join(source, 'caltech-256-60-val.rec'))
-upload_to_s3(prefix, 'validation', 'caltech-256-60-val.rec')
-print ("Finished Downloadng Testing Data")
+for s3_object in source_bucket.objects.filter(Prefix=source_bucket_prefix):
+    copy_source = {
+        'Bucket': source_bucket_name,
+        'Key': s3_object.key
+    }
+    try:
+        target_key = s3_object.key.replace(source_bucket_prefix, prefix+'/data/')
+        obj = s3.Object(bucket_name, target_key).load()
+        print('Already Copied {0}'.format(target_key))
+    except ClientError as e:    
+        print('Copying {0} ...'.format(target_key))
+        s3.Bucket(bucket_name).copy(copy_source, target_key)
 
 end = time.time()
-print(end - start)
+
+print('Data prep complete in: {}'.format(end - start))

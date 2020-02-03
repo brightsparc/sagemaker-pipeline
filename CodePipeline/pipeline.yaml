@@ -21,13 +21,9 @@ Parameters:
     Default: master
     Description: Branch to use from Repo. Only the Name. not the URL
     Type: String
-  DataSource:
-    Default: http://data.mxnet.io/data/caltech-256
-    Description: The path to Image Dateset
-    Type: String
   BucketPrefix:
-    Default: caltech-256
-    Description: The bucket prefix for the dataset
+    Default: aim362
+    Description: The bucket prefix
     Type: String
 Metadata:
   AWS::CloudFormation::Interface:
@@ -112,17 +108,16 @@ Resources:
               runtime-versions:
                 python: 3.7
               commands:
-                - echo "Installing wget and boto3"
-                - pip3 install wget
-                - pip3 install boto3
+                - echo "Installing boto3 and sagemaker"
+                - pip3 install boto3 sagemaker
             pre_build:
               commands:
                 - echo "Running data-prep.py"
-                - python3 Source/data-prep.py "${DataSource}" "${DataBucket}" "${BucketPrefix}"
+                - python3 Source/data-prep.py "${DataBucket}" "${BucketPrefix}"
             build:
               commands:
                 - echo "Running training.py"
-                - python3 Source/training.py "${AWS::Region}" "${SagemakerExecutionRole.Arn}" "${SagemakerAutoScalingRole.Arn}" "${DataBucket}" "${BucketPrefix}" "${AWS::StackName}" $CODEBUILD_RESOLVED_SOURCE_VERSION
+                - python3 Source/training.py "${DataBucket}" "${BucketPrefix}" "${SagemakerExecutionRole.Arn}" "${SagemakerAutoScalingRole.Arn}" "${AWS::StackName}" $CODEBUILD_RESOLVED_SOURCE_VERSION
             post_build:
               commands:
                 - echo "Cleaning"
