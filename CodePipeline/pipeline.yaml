@@ -108,8 +108,8 @@ Resources:
               runtime-versions:
                 python: 3.7
               commands:
-                - echo "Installing boto3 and sagemaker"
-                - pip3 install boto3 sagemaker
+                - echo "Installing sagemaker"
+                - pip3 install sagemaker
             pre_build:
               commands:
                 - echo "Running data-prep.py"
@@ -120,8 +120,7 @@ Resources:
                 - python3 Source/training.py "${DataBucket}" "${BucketPrefix}" "${SagemakerExecutionRole.Arn}" "${SagemakerAutoScalingRole.Arn}" "${AWS::StackName}" $CODEBUILD_RESOLVED_SOURCE_VERSION
             post_build:
               commands:
-                - echo "Cleaning"
-                - rm caltech*
+                - echo "Complete"
           artifacts:
             files:
               - '**/*'

@@ -13,40 +13,39 @@ bucket_name = sys.argv[1]
 prefix = sys.argv[2]
 execution_role = sys.argv[3]
 autoscaling_role = sys.argv[4]
-stack_name = sys.argv[5]
-commit_id = sys.argv[6]
-commit_id = commit_id[0:7]
+exp_name = sys.argv[5]
+trial_name = sys.argv[6][0:7]
 
 ## Create Experiment and Trial
 
 start = time.time()
-print('Creating experiment and trial...')
+print('Creating experiment: {} and trial: {}'.format(exp_name, trial_name))
 
 sm = boto3.client('sagemaker')
 
 try:
     response = sm.create_experiment(
-        ExperimentName=stack_name,
-        DisplayName=stack_name,
+        ExperimentName=exp_name,
+        DisplayName=exp_name,
         Description='MLOps experiment'
     )
     print("Created experiment: %s" % response)
 except ClientError as e:
     if e.response['Error']['Code'] == 'ValidationException':
-        print("Experiment %s already exists" % stack_name)
+        print("Experiment %s already exists" % exp_name)
     else:
         print("Unexpected error: %s" % e)
 
 try:
     response = sm.create_trial(
-        TrialName=commit_id,
-        DisplayName=commit_id,
-        ExperimentName=stack_name,
+        TrialName=trial_name,
+        DisplayName=trial_name,
+        ExperimentName=exp_name,
     )
     print("Created trial: %s" % response)
 except ClientError as e:
     if e.response['Error']['Code'] == 'ValidationException':
-        print("Trial %s already exists" % commit_id)
+        print("Trial %s already exists" % trial_name)
     else:
         print("Unexpected error: %s" % e)
 
@@ -64,7 +63,7 @@ hyperparameters = {
 }
 
 entry_point='train_xgboost.py'
-source_dir='source_dir/'
+source_dir='Source/'
 output_path = 's3://{0}/{1}/output/'.format(bucket_name, prefix)
 debugger_output_path = 's3://{0}/{1}/output/debug'.format(bucket_name, prefix) # Path where we save debug outputs
 code_location = 's3://{0}/{1}/code'.format(bucket_name, prefix)
@@ -126,8 +125,8 @@ print('Training image: {}'.format(training_image))
 estimator.fit(
     inputs={'train': train_config, 'validation': val_config },
     experiment_config={
-        "ExperimentName": stack_name,
-        "TrialName": commit_id,
+        "ExperimentName": exp_name,
+        "TrialName": trial_name,
         "TrialComponentDisplayName": "Training",
     },
     wait=True)
@@ -143,7 +142,7 @@ config_data_qa = {
   "Parameters":
     {
         "Environment": "qa",
-        "ParentStackName": stack_name,
+        "ParentStackName": exp_name,
         "JobName": job_name,
         "ModelOutputPath": output_path,
         "SageMakerRole": execution_role,
@@ -155,7 +154,7 @@ config_data_prod = {
   "Parameters":
     {
         "Environment": "prod",
-        "ParentStackName": stack_name,
+        "ParentStackName": exp_name,
         "JobName": job_name,
         "ModelOutputPath": output_path,
         "SageMakerRole": execution_role,
