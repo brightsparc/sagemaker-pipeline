@@ -82,8 +82,10 @@ hook_config = DebuggerHookConfig(
     ]
 )
 
+job_name_base = "{}-{}".format(exp_name, trial_name)
+
 estimator = XGBoost(
-    base_job_name="nw-traffic-classification-xgb",
+    base_job_name=job_name_base,
     entry_point=entry_point,
     source_dir=source_dir,
     output_path=output_path,

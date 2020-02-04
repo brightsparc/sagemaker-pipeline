@@ -147,16 +147,88 @@ Resources:
               runtime-versions:
                 python: 3.7
               commands:
-                - echo "Installing wget and boto3"
-                - pip3 install wget
-                - pip3 install boto3
-                - pip3 install numpy
+                - echo "Installing sagemaker"
+                - pip3 install sagemaker
             build:
               commands:
               - echo "Running test.py"
               - python3 Source/test.py "CloudFormation/configuration_qa.json"
       TimeoutInMinutes: 30
 
+  SuggestBaselineProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub ${AWS::StackName}-pipeline-suggestbaseline
+      Description: Suggest a monitor baseline using using SageMaker
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/amazonlinux2-x86_64-standard:1.0
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: !Sub |
+          version: 0.2
+          phases:
+            install:
+              runtime-versions:
+                python: 3.7
+              commands:
+                - echo "Installing sagemaker"
+                - pip3 install sagemaker
+            pre_build:
+              commands:
+                - echo "Running baseline-prep.py"
+                - python3 Source/baseline-prep.py "${DataBucket}" "${BucketPrefix}"
+            build:
+              commands:
+                - echo "Running suggest_baseline.py"
+                - python3 Source/monitor_baseline.py "${DataBucket}" "${BucketPrefix}" "${SagemakerExecutionRole.Arn}" 
+            post_build:
+              commands:
+                - echo "Complete"
+          artifacts:
+            files:
+              - '**/*'
+      TimeoutInMinutes: 30 
+
+  MonitorScheduleProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub ${AWS::StackName}-pipeline-monitorschedule
+      Description: Suggest a monitor baseline using using SageMaker
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/amazonlinux2-x86_64-standard:1.0
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: !Sub |
+          version: 0.2
+          phases:
+            install:
+              runtime-versions:
+                python: 3.7
+              commands:
+                - echo "Installing sagemaker"
+                - pip3 install sagemaker
+            build:
+              commands:
+                - echo "Running suggest_baseline.py"
+                - python3 Source/monitor_schedule.py "${DataBucket}" "${BucketPrefix}" "${SagemakerExecutionRole.Arn}" 
+            post_build:
+              commands:
+                - echo "Complete"
+          artifacts:
+            files:
+              - '**/*'
+      TimeoutInMinutes: 30    
+    
   TestEndpointProjectProd:
     Type: AWS::CodeBuild::Project
     Properties:
@@ -267,6 +339,30 @@ Resources:
                 ProjectName: !Ref 'TestEndpointProjectQA'
               InputArtifacts:
                 - Name: bld
+              RunOrder: '2'
+        - Name: Monitoring
+          Actions:
+            - Name: SuggestBaseline
+              ActionTypeId:
+                Category: Monitor
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                ProjectName: !Ref 'SuggestBaselineProject'
+              InputArtifacts:
+                - Name: src
+              RunOrder: '1'
+            - Name: CreateSchedule
+              ActionTypeId:
+                Category: Monitor
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                ProjectName: !Ref 'CreateScheduleProject'
+              InputArtifacts:
+                - Name: src
               RunOrder: '2'
         - Name: Production
           Actions:
