@@ -64,7 +64,7 @@ hyperparameters = {
 
 entry_point='train_xgboost.py'
 source_dir='Source/'
-output_path = 's3://{0}/{1}/output/'.format(bucket_name, prefix)
+output_path = 's3://{0}/{1}/output'.format(bucket_name, prefix)
 debugger_output_path = 's3://{0}/{1}/output/debug'.format(bucket_name, prefix) # Path where we save debug outputs
 code_location = 's3://{0}/{1}/code'.format(bucket_name, prefix)
 
