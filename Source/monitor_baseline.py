@@ -1,6 +1,7 @@
 import sys
 import time
 import json
+import os
 import boto3
 from botocore.exceptions import ClientError
 import sagemaker
@@ -14,6 +15,9 @@ prefix = sys.argv[2]
 execution_role = sys.argv[3]
 
 ## Create baseline
+
+start = time.time()
+print('Starting monitor baseline')
 
 from sagemaker.model_monitor import DefaultModelMonitor
 from sagemaker.model_monitor.dataset_format import DatasetFormat
@@ -38,3 +42,12 @@ my_default_monitor.suggest_baseline(
     output_s3_uri=baseline_results_path,
     wait=True
 )
+
+# Export processing job as env variables
+# see: https://docs.aws.amazon.com/codepipeline/latest/userguide/reference-variables.html
+
+processing_job_name = my_default_monitor.latest_baselining_job_name
+os.environ['PROCESSING_JOB_NAME'] = processing_job_name
+
+end = time.time()
+print('Monitor baseline complete in: {}'.format(end - start))

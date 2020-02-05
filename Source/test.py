@@ -10,7 +10,7 @@ configuration_file = sys.argv[1]
 with open(configuration_file) as f:
     data = json.load(f)
 
-endpoint_name = '{}-{}'.format(data["Parameters"]["ParentStackName"], data["Parameters"]["Environment"])
+endpoint_name = data["Parameters"]["EndpointName"]
 
 print('Starting testing endpoint: {}'.format(endpoint_name))
 

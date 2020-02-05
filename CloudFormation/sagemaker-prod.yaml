@@ -1,24 +1,24 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'Prod SageMaker Endpoint'
+Description: 'QA SageMaker Endpoint'
 Parameters:
-  Environment:
-    Description: Current environment we are working in
-    MaxLength: '64'
+  ModelName:
+    Description: The name of the model that you want to host. This is the name that you specified when creating the model.
+    MaxLength: '63'
     MinLength: '1'
     Type: String
-  ParentStackName:
-    Description: Name of parent stack
-    MaxLength: '64'
-    MinLength: '1'
-    Type: String
-  JobName:
-    Description: Name of data bucket
-    MaxLength: '64'
-    MinLength: '1'
-    Type: String
-  ModelOutputPath:
-    Description: The s3 model output path
+  ModelDataUrl:
+    Description: The S3 path where the model artifacts, which result from model training, are stored.
     MaxLength: '1024'
+    MinLength: '1'
+    Type: String
+  EndpointName:
+    Description: The name of the endpoint. The name must be unique within an AWS Region in your AWS account.
+    MaxLength: '63'
+    MinLength: '1'
+    Type: String
+  EndpointConfigName:
+    Description: The name of the EndpointConfig resource that specifies the configuration for the endpoint.     
+    MaxLength: '63'
     MinLength: '1'
     Type: String
   SageMakerRole:
@@ -42,7 +42,7 @@ Parameters:
     Default: 'AllTraffic'
     Type: String
   AutoScalingRole:
-    Description: Name of SageMaker role
+    Description: Name of Autoscaling role
     MaxLength: '64'
     MinLength: '1'
     Type: String
@@ -67,29 +67,29 @@ Resources:
     Type: "AWS::SageMaker::Model"
     DeletionPolicy: Delete
     Properties:
-      ModelName: !Sub ${Environment}-${JobName}
-      ExecutionRoleArn: !Ref SageMakerRole
+      ModelName: !Sub ${ModelName}
+      ExecutionRoleArn: !Sub ${SageMakerRole}
       PrimaryContainer:
-        ModelDataUrl: !Sub ${ModelOutputPath}/${JobName}/output/model.tar.gz
-        Image: !Ref SageMakerImage
+        ModelDataUrl: !Sub ${ModelDataUrl}
+        Image: !Sub ${SageMakerImage}
   Endpoint:
     Type: "AWS::SageMaker::Endpoint"
     DependsOn: EndpointConfig
     DeletionPolicy: Delete
     Properties:
-      EndpointName: !Sub ${ParentStackName}-${Environment}
+      EndpointName: !Sub ${EndpointName}
       EndpointConfigName: !GetAtt EndpointConfig.EndpointConfigName
   EndpointConfig:
     Type: "AWS::SageMaker::EndpointConfig"
     DependsOn: Model
     DeletionPolicy: Delete
     Properties:
-        EndpointConfigName: !Sub ${Environment}-${JobName}
+        EndpointConfigName: !Sub ${EndpointConfigName}
         ProductionVariants:
         - ModelName: !GetAtt Model.ModelName
           VariantName: !Ref SageMakerVariant
-          InitialInstanceCount: !Ref AutoScalingMinCapacity
-          InstanceType: !Ref SageMakerInstanceType
+          InitialInstanceCount: 1
+          InstanceType: !Sub ${SageMakerInstanceType}
           InitialVariantWeight: 1
   AutoScalingTarget:
     Type: AWS::ApplicationAutoScaling::ScalableTarget
@@ -97,7 +97,7 @@ Resources:
     Properties: 
       MinCapacity: !Ref AutoScalingMinCapacity
       MaxCapacity: !Ref AutoScalingMaxCapacity
-      ResourceId: !Sub endpoint/${ParentStackName}-${Environment}/variant/${SageMakerVariant}
+      ResourceId: !Sub endpoint/${EndpointName}/variant/${SageMakerVariant}
       RoleARN: !Ref AutoScalingRole
       ScalableDimension: sagemaker:variant:DesiredInstanceCount
       ServiceNamespace: sagemaker
@@ -105,9 +105,9 @@ Resources:
     Type: AWS::ApplicationAutoScaling::ScalingPolicy
     DependsOn: AutoScalingTarget
     Properties: 
-      PolicyName: !Sub SageMaker-${ParentStackName}-${Environment}
+      PolicyName: !Sub SageMaker-${EndpointName}
       PolicyType: TargetTrackingScaling
-      ResourceId: !Sub endpoint/${ParentStackName}-${Environment}/variant/${SageMakerVariant}
+      ResourceId: !Sub endpoint/${EndpointName}/variant/${SageMakerVariant}
       ScalingTargetId: !Ref AutoScalingTarget
       TargetTrackingScalingPolicyConfiguration: 
         PredefinedMetricSpecification: 

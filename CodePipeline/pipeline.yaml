@@ -171,6 +171,9 @@ Resources:
         Type: CODEPIPELINE
         BuildSpec: !Sub |
           version: 0.2
+          env:
+            exported-variables:
+              - PROCESSING_JOB_NAME
           phases:
             install:
               runtime-versions:
@@ -180,12 +183,12 @@ Resources:
                 - pip3 install sagemaker
             pre_build:
               commands:
-                - echo "Running baseline-prep.py"
-                - python3 Source/baseline-prep.py "${DataBucket}" "${BucketPrefix}"
+                - echo "Running monitor_prep.py"
+                - python3 Source/monitor_prep.py "${DataBucket}" "${BucketPrefix}"
             build:
               commands:
                 - echo "Running suggest_baseline.py"
-                - python3 Source/monitor_baseline.py "${DataBucket}" "${BucketPrefix}" "${SagemakerExecutionRole.Arn}" 
+                - python3 Source/monitor_baseline.py "${DataBucket}" "${BucketPrefix}" "${SagemakerExecutionRole.Arn}" "CloudFormation/configuration_qa.json"
             post_build:
               commands:
                 - echo "Complete"
@@ -219,7 +222,7 @@ Resources:
                 - pip3 install sagemaker
             build:
               commands:
-                - echo "Running suggest_baseline.py"
+                - echo "Running monitor_schedule.py"
                 - python3 Source/monitor_schedule.py "${DataBucket}" "${BucketPrefix}" "${SagemakerExecutionRole.Arn}" 
             post_build:
               commands:
@@ -273,6 +276,7 @@ Resources:
         - Name: Source
           Actions:
             - Name: Source
+              Namespace: SourceVariables
               ActionTypeId:
                 Category: Source
                 Owner: ThirdParty
@@ -299,14 +303,19 @@ Resources:
               InputArtifacts:
                 - Name: src
               RunOrder: '1'
-            - Name: ModelTraining
+            - Name: Trainig
+              Namespace: TrainingVariables
               ActionTypeId:
                 Category: Build
                 Owner: AWS
                 Provider: CodeBuild
                 Version: '1'
               Configuration:
-                ProjectName: !Ref 'ModelTrainingProject'
+                EnvironmentVariables: 
+                  - Name: COMMIT_ID
+                    Value: "#{SourceVariables.CommitId}"
+                    Type: "PLAINTEXT"
+              Namespace: Training
               InputArtifacts:
                 - Name: src
               OutputArtifacts:
@@ -343,6 +352,7 @@ Resources:
         - Name: Monitoring
           Actions:
             - Name: SuggestBaseline
+              Namespace: MonitoringVariables
               ActionTypeId:
                 Category: Monitor
                 Owner: AWS
@@ -353,16 +363,21 @@ Resources:
               InputArtifacts:
                 - Name: src
               RunOrder: '1'
-            - Name: CreateSchedule
+            - Name: MonitorSchedule
               ActionTypeId:
                 Category: Monitor
                 Owner: AWS
                 Provider: CodeBuild
                 Version: '1'
               Configuration:
-                ProjectName: !Ref 'CreateScheduleProject'
+                ProjectName: !Ref 'MonitorScheduleProject'
+                EnvironmentVariables: 
+                  - Name: PROCESSING_JOB_NAME
+                    Value: "#{MonitoringVariables.PROCESSING_JOB_NAME}"
+                    Type: "PLAINTEXT"
               InputArtifacts:
                 - Name: src
+                - Name: bld
               RunOrder: '2'
         - Name: Production
           Actions:

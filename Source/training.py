@@ -143,10 +143,10 @@ print('Training job {} complete in {}'.format(job_name, end - start))
 config_data_qa = {
   "Parameters":
     {
-        "Environment": "qa",
-        "ParentStackName": exp_name,
-        "JobName": job_name,
-        "ModelOutputPath": output_path,
+        "ModelName": "qa-{}".format(job_name),
+        "EndpointName": "qa-{}".format(exp_name),
+        "EndpointConfigName": "qa-{}".format(job_name),
+        "ModelDataUrl": "{}/{}/output/model.tar.gz".format(output_path, job_name),
         "SageMakerRole": execution_role,
         "SageMakerImage": training_image
     }
@@ -155,13 +155,13 @@ config_data_qa = {
 config_data_prod = {
   "Parameters":
     {
-        "Environment": "prod",
-        "ParentStackName": exp_name,
-        "JobName": job_name,
+        "ModelName": "prod-{}".format(job_name),
+        "EndpointName": "prod-{}".format(exp_name),
+        "EndpointConfigName": "prod-{}".format(job_name),
         "ModelOutputPath": output_path,
         "SageMakerRole": execution_role,
         "SageMakerImage": training_image,
-        "AutoScalingRole": autoscaling_role,
+        "AutoScalingRole": autoscaling_role 
     }
 }
 
