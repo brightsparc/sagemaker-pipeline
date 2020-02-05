@@ -103,6 +103,9 @@ Resources:
         Type: CODEPIPELINE
         BuildSpec: !Sub |
           version: 0.2
+          env:
+            exported-variables:
+              - QA_ENDPOINT_NAME
           phases:
             install:
               runtime-versions:
@@ -303,7 +306,7 @@ Resources:
               InputArtifacts:
                 - Name: src
               RunOrder: '1'
-            - Name: Trainig
+            - Name: ModelTraining
               Namespace: TrainingVariables
               ActionTypeId:
                 Category: Build
@@ -311,11 +314,8 @@ Resources:
                 Provider: CodeBuild
                 Version: '1'
               Configuration:
-                EnvironmentVariables: 
-                  - Name: COMMIT_ID
-                    Value: "#{SourceVariables.CommitId}"
-                    Type: "PLAINTEXT"
-              Namespace: Training
+                ProjectName: !Ref 'ModelTrainingProject'
+                EnvironmentVariables: '[{"name":"COMMIT_ID","value":"#{SourceVariables.CommitId}","type":"PLAINTEXT"}]'
               InputArtifacts:
                 - Name: src
               OutputArtifacts:
@@ -354,7 +354,7 @@ Resources:
             - Name: SuggestBaseline
               Namespace: MonitoringVariables
               ActionTypeId:
-                Category: Monitor
+                Category: Build
                 Owner: AWS
                 Provider: CodeBuild
                 Version: '1'
@@ -365,19 +365,15 @@ Resources:
               RunOrder: '1'
             - Name: MonitorSchedule
               ActionTypeId:
-                Category: Monitor
+                Category: Build
                 Owner: AWS
                 Provider: CodeBuild
                 Version: '1'
               Configuration:
                 ProjectName: !Ref 'MonitorScheduleProject'
-                EnvironmentVariables: 
-                  - Name: PROCESSING_JOB_NAME
-                    Value: "#{MonitoringVariables.PROCESSING_JOB_NAME}"
-                    Type: "PLAINTEXT"
+                EnvironmentVariables: '[{"name":"PROCESSING_JOB_NAME","value":"#{MonitoringVariables.PROCESSING_JOB_NAME}","type":"PLAINTEXT"},{"name":"ENDPOINT_NAME","value":"#{TrainingVariables.QA_ENDPOINT_NAME}","type":"PLAINTEXT"}]'
               InputArtifacts:
                 - Name: src
-                - Name: bld
               RunOrder: '2'
         - Name: Production
           Actions:

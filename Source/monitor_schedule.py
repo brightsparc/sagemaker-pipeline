@@ -12,11 +12,8 @@ from sagemaker.model_monitor import DefaultModelMonitor, BaseliningJob, CronExpr
 bucket_name = sys.argv[1]
 prefix = sys.argv[2]
 execution_role = sys.argv[3]
-configuration_file = sys.argv[4]
-with open(configuration_file) as f:
-    data = json.load(f)
-endpoint_name = data["Parameters"]["EndpointName"]
 processing_job_name = os.environ['PROCESSING_JOB_NAME']
+endpoint_name = os.environ['ENDPOINT_NAME']
 
 # Upload pre-processor scripts
 

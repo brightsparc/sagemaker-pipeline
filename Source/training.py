@@ -2,6 +2,7 @@ import sys
 import time
 import json
 import boto3
+import os
 from botocore.exceptions import ClientError
 import sagemaker
 from sagemaker.xgboost import XGBoost
@@ -138,6 +139,11 @@ job_name = estimator.latest_training_job.name
 end = time.time()
 print('Training job {} complete in {}'.format(job_name, end - start))
 
+# save environment variables
+
+os.environ['QA_ENDPOINT_NAME'] = "qa-{}".format(exp_name)
+os.environ['PROD_ENDPOINT_NAME'] = "prod-{}".format(exp_name)
+
 # creating configuration files so we can pass parameters to our sagemaker endpoint cloudformation
 
 config_data_qa = {
@@ -158,7 +164,7 @@ config_data_prod = {
         "ModelName": "prod-{}".format(job_name),
         "EndpointName": "prod-{}".format(exp_name),
         "EndpointConfigName": "prod-{}".format(job_name),
-        "ModelOutputPath": output_path,
+        "ModelDataUrl": "{}/{}/output/model.tar.gz".format(output_path, job_name),
         "SageMakerRole": execution_role,
         "SageMakerImage": training_image,
         "AutoScalingRole": autoscaling_role 
