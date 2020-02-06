@@ -106,6 +106,7 @@ Resources:
           env:
             exported-variables:
               - QA_ENDPOINT_NAME
+              - PROD_ENDPOINT_NAME
           phases:
             install:
               runtime-versions:
@@ -116,23 +117,24 @@ Resources:
             pre_build:
               commands:
                 - echo "Running data-prep.py"
-                - python3 Source/data-prep.py "${DataBucket}" "${BucketPrefix}"
+                - python3 Source/Training/training_data_prep.py "${DataBucket}" "${BucketPrefix}"
             build:
               commands:
                 - echo "Running training.py"
-                - python3 Source/training.py "${DataBucket}" "${BucketPrefix}" "${SagemakerExecutionRole.Arn}" "${SagemakerAutoScalingRole.Arn}" "${AWS::StackName}" $CODEBUILD_RESOLVED_SOURCE_VERSION
+                - python3 Source/Training/training.py "${DataBucket}" "${BucketPrefix}" "${SagemakerExecutionRole.Arn}" "${SagemakerAutoScalingRole.Arn}" "${AWS::StackName}" $CODEBUILD_RESOLVED_SOURCE_VERSION
             post_build:
               commands:
-                - echo "Complete"
+                - echo "Exporting env vars"
+                - source CloudFormation/training.vars
           artifacts:
             files:
               - '**/*'
       TimeoutInMinutes: 30
 
-  TestEndpointProjectQA:
+  TestEndpointProject:
     Type: AWS::CodeBuild::Project
     Properties:
-      Name: !Sub ${AWS::StackName}-pipeline-test-qa
+      Name: !Sub ${AWS::StackName}-pipeline-test
       Description: Checks if endpoint is working
       ServiceRole: !GetAtt CodeBuildRole.Arn
       Artifacts:
@@ -155,7 +157,7 @@ Resources:
             build:
               commands:
               - echo "Running test.py"
-              - python3 Source/test.py "CloudFormation/configuration_qa.json"
+              - python3 Source/Test/test.py
       TimeoutInMinutes: 30
 
   SuggestBaselineProject:
@@ -182,19 +184,20 @@ Resources:
               runtime-versions:
                 python: 3.7
               commands:
-                - echo "Installing sagemaker"
-                - pip3 install sagemaker
+                - echo "Installing sagemaker and pandas"
+                - pip3 install sagemaker pandas
             pre_build:
               commands:
                 - echo "Running monitor_prep.py"
-                - python3 Source/monitor_prep.py "${DataBucket}" "${BucketPrefix}"
+                - python3 Source/Monitor/monitor_prep.py "${DataBucket}" "${BucketPrefix}"
             build:
               commands:
                 - echo "Running suggest_baseline.py"
-                - python3 Source/monitor_baseline.py "${DataBucket}" "${BucketPrefix}" "${SagemakerExecutionRole.Arn}" "CloudFormation/configuration_qa.json"
+                - python3 Source/Monitor/monitor_baseline.py "${DataBucket}" "${BucketPrefix}" "${SagemakerExecutionRole.Arn}" "CloudFormation/configuration_qa.json"
             post_build:
               commands:
-                - echo "Complete"
+                - echo "Exporting env vars"
+                - source CloudFormation/monitor_baseline.vars
           artifacts:
             files:
               - '**/*'
@@ -221,12 +224,12 @@ Resources:
               runtime-versions:
                 python: 3.7
               commands:
-                - echo "Installing sagemaker"
-                - pip3 install sagemaker
+                - echo "Installing sagemaker and pandas"
+                - pip3 install sagemaker pandas
             build:
               commands:
                 - echo "Running monitor_schedule.py"
-                - python3 Source/monitor_schedule.py "${DataBucket}" "${BucketPrefix}" "${SagemakerExecutionRole.Arn}" 
+                - python3 Source/Monitor/create_schedule.py "${DataBucket}" "${BucketPrefix}" "${SagemakerExecutionRole.Arn}" 
             post_build:
               commands:
                 - echo "Complete"
@@ -235,37 +238,6 @@ Resources:
               - '**/*'
       TimeoutInMinutes: 30    
     
-  TestEndpointProjectProd:
-    Type: AWS::CodeBuild::Project
-    Properties:
-      Name: !Sub ${AWS::StackName}-pipeline-test-prod
-      Description: Checks if endpoint is working
-      ServiceRole: !GetAtt CodeBuildRole.Arn
-      Artifacts:
-        Type: CODEPIPELINE
-      Environment:
-        Type: LINUX_CONTAINER
-        ComputeType: BUILD_GENERAL1_SMALL
-        Image: aws/codebuild/amazonlinux2-x86_64-standard:1.0
-      Source:
-        Type: CODEPIPELINE
-        BuildSpec: !Sub |
-          version: 0.2
-          phases:
-            install:
-              runtime-versions:
-                python: 3.7
-              commands:
-                - echo "Installing wget and boto3"
-                - pip3 install wget
-                - pip3 install boto3
-                - pip3 install numpy
-            build:
-              commands:
-              - echo "Running test.py"
-              - python3 Source/test.py "CloudFormation/configuration_prod.json"
-      TimeoutInMinutes: 30
-
   Pipeline:
     Type: AWS::CodePipeline::Pipeline
     Properties:
@@ -295,7 +267,7 @@ Resources:
               RunOrder: '1'
         - Name: Build_and_Train
           Actions:
-            - Name: cfn-nag
+            - Name: LintCloudFormation
               ActionTypeId:
                 Category: Test
                 Owner: AWS
@@ -315,7 +287,6 @@ Resources:
                 Version: '1'
               Configuration:
                 ProjectName: !Ref 'ModelTrainingProject'
-                EnvironmentVariables: '[{"name":"COMMIT_ID","value":"#{SourceVariables.CommitId}","type":"PLAINTEXT"}]'
               InputArtifacts:
                 - Name: src
               OutputArtifacts:
@@ -346,6 +317,7 @@ Resources:
                 Version: '1'
               Configuration:
                 ProjectName: !Ref 'TestEndpointProjectQA'
+                EnvironmentVariables: '{"name":"ENDPOINT_NAME","value":"#{TrainingVariables.QA_ENDPOINT_NAME}","type":"PLAINTEXT"}]'
               InputArtifacts:
                 - Name: bld
               RunOrder: '2'
@@ -410,6 +382,7 @@ Resources:
                 Version: '1'
               Configuration:
                 ProjectName: !Ref 'TestEndpointProjectProd'
+                EnvironmentVariables: '{"name":"ENDPOINT_NAME","value":"#{TrainingVariables.PROD_ENDPOINT_NAME}","type":"PLAINTEXT"}]'
               InputArtifacts:
                 - Name: bld
               RunOrder: '3'

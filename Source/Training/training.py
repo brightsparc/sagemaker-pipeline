@@ -141,8 +141,9 @@ print('Training job {} complete in {}'.format(job_name, end - start))
 
 # save environment variables
 
-os.environ['QA_ENDPOINT_NAME'] = "qa-{}".format(exp_name)
-os.environ['PROD_ENDPOINT_NAME'] = "prod-{}".format(exp_name)
+with open( './CloudFormation/training.vars', 'w' ) as f:
+    env_vars = "export QA_ENDPOINT_NAME=qa-{0}\nexport PROD_ENDPOINT_NAME=prod-{0}\n".format(exp_name)
+    f.write(env_vars)
 
 # creating configuration files so we can pass parameters to our sagemaker endpoint cloudformation
 
@@ -171,13 +172,8 @@ config_data_prod = {
     }
 }
 
-json_config_data_qa = json.dumps(config_data_qa)
-json_config_data_prod = json.dumps(config_data_prod)
+with open( './CloudFormation/configuration_qa.json', 'w' ) as f:
+    f.write(json.dumps(config_data_qa))
 
-f = open( './CloudFormation/configuration_qa.json', 'w' )
-f.write(json_config_data_qa)
-f.close()
-
-f = open( './CloudFormation/configuration_prod.json', 'w' )
-f.write(json_config_data_prod)
-f.close()
+with open( './CloudFormation/configuration_prod.json', 'w' ) as f:
+    f.write(json.dumps(config_data_prod))

@@ -40,14 +40,20 @@ my_default_monitor.suggest_baseline(
     baseline_dataset=baseline_data_path,
     dataset_format=DatasetFormat.csv(header=True),
     output_s3_uri=baseline_results_path,
+    logs=False, # Only meaningful when wait=True
     wait=True
 )
 
 # Export processing job as env variables
 # see: https://docs.aws.amazon.com/codepipeline/latest/userguide/reference-variables.html
 
+# save environment variables
+
 processing_job_name = my_default_monitor.latest_baselining_job_name
-os.environ['PROCESSING_JOB_NAME'] = processing_job_name
+
+with open( './CloudFormation/monitor_baseline.vars', 'w' ) as f:
+    env_vars = "export PROCESSING_JOB_NAME={0}\n".format(processing_job_name)
+    f.write(env_vars)
 
 end = time.time()
 print('Monitor baseline complete in: {}'.format(end - start))

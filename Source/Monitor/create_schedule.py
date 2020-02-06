@@ -52,8 +52,8 @@ print('Starting monitor schedule for endpoint: {}'.format(endpoint_name))
 # First, copy over some test scripts to the S3 bucket so that they can be used for pre and post processing
 
 s3 = boto3.Session().resource('s3')
-s3.Bucket(bucket_name).Object(code_prefix+"/preprocessor.py").upload_file('Source/preprocessor.py')
-s3.Bucket(bucket_name).Object(code_prefix+"/postprocessor.py").upload_file('Source/postprocessor.py')
+s3.Bucket(bucket_name).Object(code_prefix+"/preprocessor.py").upload_file('Source/Monitor/preprocessor.py')
+s3.Bucket(bucket_name).Object(code_prefix+"/postprocessor.py").upload_file('Source/Monitor/postprocessor.py')
 
 my_default_monitor.create_monitoring_schedule(
     monitor_schedule_name=processing_job_name,
