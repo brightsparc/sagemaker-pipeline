@@ -13,6 +13,7 @@ from sagemaker.debugger import Rule, rule_configs, DebuggerHookConfig, Collectio
 bucket_name = sys.argv[1]
 prefix = sys.argv[2]
 execution_role = sys.argv[3]
+training_job_name = os.environ['TRAINING_JOB_NAME']
 
 ## Create baseline
 
@@ -37,6 +38,7 @@ my_default_monitor = DefaultModelMonitor(
 )
 
 my_default_monitor.suggest_baseline(
+    job_name=training_job_name, # Use the same job name as training job
     baseline_dataset=baseline_data_path,
     dataset_format=DatasetFormat.csv(header=True),
     output_s3_uri=baseline_results_path,

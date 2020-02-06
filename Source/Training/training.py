@@ -141,8 +141,12 @@ print('Training job {} complete in {}'.format(job_name, end - start))
 
 # save environment variables
 
+env_vars = """# Training export 
+export TRAINING_JOB_NAME=qa-{0}
+export QA_ENDPOINT_NAME=qa-{1}
+export PROD_ENDPOINT_NAME=prod-{1}
+""".format(job_name, exp_name)              
 with open( './CloudFormation/training.vars', 'w' ) as f:
-    env_vars = "export QA_ENDPOINT_NAME=qa-{0}\nexport PROD_ENDPOINT_NAME=prod-{0}\n".format(exp_name)
     f.write(env_vars)
 
 # creating configuration files so we can pass parameters to our sagemaker endpoint cloudformation

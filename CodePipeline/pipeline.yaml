@@ -110,6 +110,7 @@ Resources:
           version: 0.2
           env:
             exported-variables:
+              - TRAINING_JOB_NAME
               - QA_ENDPOINT_NAME
               - PROD_ENDPOINT_NAME
           phases:
@@ -337,6 +338,7 @@ Resources:
                 Version: '1'
               Configuration:
                 ProjectName: !Ref 'SuggestBaselineProject'
+                EnvironmentVariables: '[{"name":"TRAINING_JOB_NAME","value":"#{TrainingVariables.TRAINING_JOB_NAME}","type":"PLAINTEXT"}]'
               InputArtifacts:
                 - Name: src
               RunOrder: '1'
