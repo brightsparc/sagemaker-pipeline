@@ -142,7 +142,7 @@ print('Training job {} complete in {}'.format(job_name, end - start))
 # save environment variables
 
 env_vars = """# Training export 
-export TRAINING_JOB_NAME=qa-{0}
+export TRAINING_JOB_NAME={0}
 export QA_ENDPOINT_NAME=qa-{1}
 export PROD_ENDPOINT_NAME=prod-{1}
 """.format(job_name, exp_name)              

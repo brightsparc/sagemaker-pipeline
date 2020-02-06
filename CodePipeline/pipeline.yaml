@@ -4,9 +4,10 @@ Description: >
 Parameters:
   ExperimentName:
     Description: The name to use for sagemaker experiment
-    MaxLength: '32'
+    MaxLength: '26'
     MinLength: '1'
     Type: String
+    AllowedPattern: '^[a-zA-Z0-9](-*[a-zA-Z0-9])*'
   Email:
     Description: The email address where CodePipeline sends pipeline notifications
     Type: String
