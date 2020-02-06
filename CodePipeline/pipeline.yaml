@@ -316,8 +316,8 @@ Resources:
                 Provider: CodeBuild
                 Version: '1'
               Configuration:
-                ProjectName: !Ref 'TestEndpointProjectQA'
-                EnvironmentVariables: '{"name":"ENDPOINT_NAME","value":"#{TrainingVariables.QA_ENDPOINT_NAME}","type":"PLAINTEXT"}]'
+                ProjectName: !Ref 'TestEndpointProject'
+                EnvironmentVariables: '[{"name":"ENDPOINT_NAME","value":"#{TrainingVariables.QA_ENDPOINT_NAME}","type":"PLAINTEXT"}]'
               InputArtifacts:
                 - Name: bld
               RunOrder: '2'
@@ -381,8 +381,8 @@ Resources:
                 Provider: CodeBuild
                 Version: '1'
               Configuration:
-                ProjectName: !Ref 'TestEndpointProjectProd'
-                EnvironmentVariables: '{"name":"ENDPOINT_NAME","value":"#{TrainingVariables.PROD_ENDPOINT_NAME}","type":"PLAINTEXT"}]'
+                ProjectName: !Ref 'TestEndpointProject'
+                EnvironmentVariables: '[{"name":"ENDPOINT_NAME","value":"#{TrainingVariables.PROD_ENDPOINT_NAME}","type":"PLAINTEXT"}]'
               InputArtifacts:
                 - Name: bld
               RunOrder: '3'
