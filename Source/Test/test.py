@@ -1,5 +1,5 @@
 import json
-import sys
+import os
 import time
 from sagemaker.predictor import RealTimePredictor
 

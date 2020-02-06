@@ -44,9 +44,6 @@ my_default_monitor.suggest_baseline(
     wait=True
 )
 
-# Export processing job as env variables
-# see: https://docs.aws.amazon.com/codepipeline/latest/userguide/reference-variables.html
-
 # save environment variables
 
 processing_job_name = my_default_monitor.latest_baselining_job_name

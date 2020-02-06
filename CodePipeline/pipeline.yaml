@@ -2,6 +2,11 @@ AWSTemplateFormatVersion: "2010-09-09"
 Description: >
   CloudFormation SageMaker pipeline.
 Parameters:
+  ExperimentName:
+    Description: The name to use for sagemaker experiment
+    MaxLength: '32'
+    MinLength: '1'
+    Type: String
   Email:
     Description: The email address where CodePipeline sends pipeline notifications
     Type: String
@@ -121,7 +126,7 @@ Resources:
             build:
               commands:
                 - echo "Running training.py"
-                - python3 Source/Training/training.py "${DataBucket}" "${BucketPrefix}" "${SagemakerExecutionRole.Arn}" "${SagemakerAutoScalingRole.Arn}" "${AWS::StackName}" $CODEBUILD_RESOLVED_SOURCE_VERSION
+                - python3 Source/Training/training.py "${DataBucket}" "${BucketPrefix}" "${SagemakerExecutionRole.Arn}" "${SagemakerAutoScalingRole.Arn}" "${ExperimentName}" $CODEBUILD_RESOLVED_SOURCE_VERSION
             post_build:
               commands:
                 - echo "Exporting env vars"
@@ -188,12 +193,12 @@ Resources:
                 - pip3 install sagemaker pandas
             pre_build:
               commands:
-                - echo "Running monitor_prep.py"
-                - python3 Source/Monitor/monitor_prep.py "${DataBucket}" "${BucketPrefix}"
+                - echo "Running baseline_data_prep.py"
+                - python3 Source/Monitor/baseline_data_prep.py "${DataBucket}" "${BucketPrefix}"
             build:
               commands:
                 - echo "Running suggest_baseline.py"
-                - python3 Source/Monitor/monitor_baseline.py "${DataBucket}" "${BucketPrefix}" "${SagemakerExecutionRole.Arn}" "CloudFormation/configuration_qa.json"
+                - python3 Source/Monitor/suggest_baseline.py "${DataBucket}" "${BucketPrefix}" "${SagemakerExecutionRole.Arn}" 
             post_build:
               commands:
                 - echo "Exporting env vars"
